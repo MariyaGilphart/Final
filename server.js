@@ -1,22 +1,22 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-require('dotenv').config();  
+require('dotenv').config();
+
+// Initialize Express app
 const app = express();
-const port = process.env.PORT || 3000;
-
-app.use(cors());  
-
+app.use(cors());
 app.use(express.json());
 
-// Update the MongoDB URI hereconst 
-mongoURI = "mongodb+srv://mariyagilphart:Rpntech02@rpn.7odyk.mongodb.net/?retryWrites=true&w=majority&appName=RPN";
+// MongoDB URI (Make sure to add this to your Vercel environment variables)
+const mongoURI = process.env.MONGO_URI;
 
-
+// Connect to MongoDB
 mongoose.connect(mongoURI)
   .then(() => console.log('Connected to MongoDB successfully!'))
   .catch((err) => console.error('Error connecting to MongoDB:', err));
 
+// Define the schema for the form data
 const formSchema = new mongoose.Schema({
   name: String,
   phone: String,
@@ -27,50 +27,44 @@ const formSchema = new mongoose.Schema({
 
 const Form = mongoose.model('Form', formSchema);
 
-// Route for submitting a form (POST)
+// POST route to handle form submissions
 app.post('/api/forms', async (req, res) => {
   const formData = req.body;
-  console.log('Received form data:', formData);
-
   try {
-    // Create and save a new form document
     const newForm = new Form(formData);
     await newForm.save();
-
     res.status(201).json({
       status: 'success',
       message: 'Form created successfully!',
       data: newForm,
     });
   } catch (error) {
-    console.error('Error saving data:', error);
     res.status(500).json({
       status: 'error',
       message: 'Error creating form.',
-      error: error.message,  // Include error message for debugging
+      error: error.message,
     });
   }
 });
 
-// Route to get all form submissions (GET)
+// GET route to retrieve all forms
 app.get('/api/forms', async (req, res) => {
   try {
-    const forms = await Form.find();  // Retrieve all forms
+    const forms = await Form.find();
     res.status(200).json({
       status: 'success',
       data: forms,
     });
   } catch (error) {
-    console.error('Error retrieving forms:', error);
     res.status(500).json({
       status: 'error',
       message: 'Error retrieving forms.',
-      error: error.message,  // Include error message for debugging
+      error: error.message,
     });
   }
 });
 
-// Route to update an existing form (PUT)
+// PUT route to update a form
 app.put('/api/forms/:id', async (req, res) => {
   const { id } = req.params;
   const updateData = req.body;
@@ -90,15 +84,15 @@ app.put('/api/forms/:id', async (req, res) => {
       data: updatedForm,
     });
   } catch (error) {
-    console.error('Error updating form:', error);
     res.status(500).json({
       status: 'error',
       message: 'Error updating form.',
-      error: error.message, 
+      error: error.message,
     });
   }
 });
 
+// DELETE route to remove a form
 app.delete('/api/forms/:id', async (req, res) => {
   const { id } = req.params;
 
@@ -116,15 +110,13 @@ app.delete('/api/forms/:id', async (req, res) => {
       message: 'Form deleted successfully!',
     });
   } catch (error) {
-    console.error('Error deleting form:', error);
     res.status(500).json({
       status: 'error',
       message: 'Error deleting form.',
-      error: error.message, 
+      error: error.message,
     });
   }
 });
 
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
+// Export the Express app to be used by Vercel
+module.exports = app;
